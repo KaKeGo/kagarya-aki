@@ -4,6 +4,7 @@ from django.contrib.auth.models import Group
 
 from .forms import CustomUserChangeForm, CustomUserCreationForm
 from .models import CustomUser
+from .profile_models import UserProfile
 
 # Register your models here.
 
@@ -30,4 +31,5 @@ class CustomUserAdmin(UserAdmin):
     filter_horizontal = ()
 
 
+admin.site.register(UserProfile)
 admin.site.unregister(Group)
