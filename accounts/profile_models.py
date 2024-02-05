@@ -1,11 +1,16 @@
 from django.db import models
 from django.contrib.auth import get_user_model
 
+from .lvl_info import LevelInfo
+
+
 User = get_user_model()
+
 
 def get_default_avatar():
     '''Default avatar for users'''
     return 'default/avatar/avatar.jpg'
+
 
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
@@ -54,6 +59,12 @@ class UserProfile(models.Model):
         required_points_for_next_level = points_for_next_level + (self.level.level - 1) * points_increase_per_level
       
         return required_points_for_next_level - self.experience_points
+    
+    def get_level_info(self):
+        if self.level:
+            color, title = LevelInfo.get_info_for_level(self.level.level)
+            return color, title
+        return 'No title', 'No Color'
 
 class Level(models.Model):
     level = models.IntegerField(default=1)

@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import Group
+from django.utils.html import format_html
 
 from .forms import CustomUserChangeForm, CustomUserCreationForm
 from .models import CustomUser
@@ -35,10 +36,10 @@ class UserProfileAdmin(admin.ModelAdmin):
     list_display = ('user', 'username', 'get_level')
     search_fields = ('user__email', 'username')
     list_filter = ('level__level',)
-    readonly_fields = ('points_needed_for_next_level_display', 'total_experience',)
+    readonly_fields = ('points_needed_for_next_level_display', 'total_experience', 'display_level_color', 'display_level_title',)
 
     fieldsets = (
-        ('Info', {'fields': ('user', 'username',)}),
+        ('Info', {'fields': ('user', 'username', 'display_level_color', 'display_level_title',)}),
         ('Level', {'fields': ('level', 'experience_points', 'points_needed_for_next_level_display', 'total_experience')}),
         ('Additional info', {'fields': ('avatar', 'bio', 'motto', 'slug',), 'classes': ('collapse',)}),
     )
@@ -58,6 +59,15 @@ class UserProfileAdmin(admin.ModelAdmin):
             obj.total_experience += experience_diff
         super().save_model(request, obj, form, change)
         obj.check_level_up()
+
+    def display_level_color(self, obj):
+        color, _ = obj.get_level_info()
+        color = color if color else "#FFFFFF"  # Domyślny kolor, jeśli None
+        return format_html('<div style="width: 60px; height: 20px; background-color: {};"></div>', color)
+
+    def display_level_title(self, obj):
+        _, title = obj.get_level_info()
+        return title
 
 
 
