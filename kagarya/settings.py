@@ -43,6 +43,7 @@ INSTALLED_APPS = [
 
     #My apps
     'accounts',
+    'taskboard',
 
     #Third apps
     'rest_framework',
