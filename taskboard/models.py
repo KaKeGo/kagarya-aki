@@ -5,6 +5,8 @@ from django.utils import timezone
 from django.utils.text import slugify
 from django.contrib.auth import get_user_model
 
+from .permissions import TaskPermission
+
 
 User = get_user_model()
 
@@ -26,6 +28,16 @@ class ProjectBoard(models.Model):
         return self.name
     
     def save(self, *args, **kwargs):
+        is_new = self._state.adding
+        super().save(*args, **kwargs)
+        if is_new:
+            TaskPermission.objects.create(
+                user=self.creator,
+                project_board=self,
+                can_add_task=True,
+                can_add_subtask=True,
+            )
+
         if not self.slug:
             base_slug = slugify(self.name)
             random_string = generate_random_string()
