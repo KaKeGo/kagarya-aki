@@ -5,6 +5,7 @@ from django.utils import timezone
 from django.utils.text import slugify
 from django.contrib.auth import get_user_model
 
+from accounts.profile_models import UserProfile
 from .permissions import TaskPermission
 
 
@@ -28,16 +29,6 @@ class ProjectBoard(models.Model):
         return self.name
     
     def save(self, *args, **kwargs):
-        is_new = self._state.adding
-        super().save(*args, **kwargs)
-        if is_new:
-            TaskPermission.objects.create(
-                user=self.creator,
-                project_board=self,
-                can_add_task=True,
-                can_add_subtask=True,
-            )
-
         if not self.slug:
             base_slug = slugify(self.name)
             random_string = generate_random_string()
@@ -46,7 +37,16 @@ class ProjectBoard(models.Model):
                 random_string = generate_random_string(len(random_string) + 1)
                 final_slug = f'{base_slug}-{random_string}'
             self.slug = final_slug
-        super(ProjectBoard, self).save(*args, **kwargs)
+
+        super().save(*args, **kwargs)
+        is_new = self._state.adding
+        if is_new:
+            TaskPermission.objects.create(
+                user=self.creator,
+                project_board=self,
+                can_add_task=True,
+                can_add_subtask=True,
+            )
     
 class Task(models.Model):
     project_board = models.ForeignKey(ProjectBoard, on_delete=models.CASCADE)
@@ -56,7 +56,7 @@ class Task(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     completed_at = models.DateTimeField(null=True, blank=True)
 
-    completed = models.BooleanField(default=True)
+    completed = models.BooleanField(default=False)
     creator = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
     slug = models.SlugField(unique=True, max_length=255, null=True, blank=True)
 
@@ -73,8 +73,6 @@ class Task(models.Model):
                 final_slug = f'{base_slug}-{random_string}'
             self.slug = final_slug
 
-        if self.completed and not self.completed_at:
-            self.completed_at = timezone.now()
         super(Task, self).save(*args, **kwargs)
 
     def check_completion(self):
@@ -96,12 +94,44 @@ class Subtask(models.Model):
     completed_at = models.DateTimeField(null=True, blank=True)
 
     completed = models.BooleanField(default=False)
-    creator = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
+    completed_by = models.ForeignKey(User, on_delete=models.SET_NULL, blank=True, null=True, related_name='completed_subtasks')
+    creator = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name='created_subtasks')
 
     def __str__(self):
         return self.name
     
     def save(self, *args, **kwargs):
-        if self.completed and not self.completed_at:
+        if self.completed and self.completed_at is None:
             self.completed_at = timezone.now()
+
+            if self.creator:
+                try:
+                    user_profile = UserProfile.objects.get(user=self.creator)
+                    user_profile.add_experience(1)
+                except UserProfile.DoesNotExist:
+                    pass
+            
+            if self.completed_by:
+                try:
+                    completer_profile = UserProfile.objects.get(user=self.completed_by)
+                    completer_profile.add_experience(2)
+                    completer_profile.save()
+                except UserProfile.DoesNotExist:
+                    pass
+
         super(Subtask, self).save(*args, **kwargs)
+        
+        all_completed = not self.task.subtask_set.filter(completed=False).exists()
+
+        if all_completed:
+            self.task.completed = True
+            self.task.completed_at = timezone.now()
+            self.task.save(update_fields=['completed', 'completed_at'])
+
+            if self.task.creator:
+                try:
+                    user_profile = UserProfile.objects.get(user=self.task.creator)
+                    user_profile.add_experience(3)
+                    user_profile.save()
+                except UserProfile.DoesNotExist:
+                    pass
