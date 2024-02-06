@@ -101,7 +101,18 @@ class LevelInfo(Enum):
     GALAXY_SHAPER = (871, 880, '#BA55D3', 'Galaxy Shaper')
     REALM_FORGER = (881, 890, '#9370DB', 'Realm Forger')
     DIVINITY_ASCENDANT = (891, 900, '#8A2BE2', 'Divinity Ascendant')
-    
+    # Ultimate Titles
+    COSMIC_ARCHITECT = (901, 910, '#FF1493', 'Cosmic Architect')
+    TIME_MASTER = (911, 920, '#00BFFF', 'Time Master')
+    UNIVERSE_WEAVER = (921, 930, '#7B68EE', 'Universe Weaver')
+    DIMENSIONAL_SORCERER = (931, 940, '#8A2BE2', 'Dimensional Sorcerer')
+    ETERNAL_PHANTOM = (941, 950, '#FFD700', 'Eternal Phantom')
+    GALACTIC_EMPEROR = (951, 960, '#FF8C00', 'Galactic Emperor')
+    VOID_EMPRESS = (961, 970, '#C71585', 'Void Empress')
+    REALITY_SHAPER = (971, 980, '#00FA9A', 'Reality Shaper')
+    COSMOS_GUARDIAN = (981, 990, '#00FFFF', 'Cosmos Guardian')
+    INFINITY_OVERLORD = (991, 1000, '#FF4500', 'Infinity Overlord')
+
 
     def __init__(self, min_level, max_level, color, title):
         self.min_level = min_level
