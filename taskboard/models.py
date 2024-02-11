@@ -7,6 +7,10 @@ from django.contrib.auth import get_user_model
 
 from accounts.profile_models import UserProfile
 from .permissions import TaskPermission
+from .choices import (
+    PRIORITY_CHOICES,
+    STATUS_CHOICES,
+)
 
 
 User = get_user_model()
@@ -55,6 +59,7 @@ class Task(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
     completed_at = models.DateTimeField(null=True, blank=True)
+    status = models.IntegerField(choices=STATUS_CHOICES, default=1)
 
     completed = models.BooleanField(default=False)
     creator = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
@@ -92,8 +97,10 @@ class Subtask(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
     completed_at = models.DateTimeField(null=True, blank=True)
+    status = models.IntegerField(choices=STATUS_CHOICES, default=2)
 
     completed = models.BooleanField(default=False)
+    assigned_to = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     completed_by = models.ForeignKey(User, on_delete=models.SET_NULL, blank=True, null=True, related_name='completed_subtasks')
     creator = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name='created_subtasks')
 
@@ -103,6 +110,10 @@ class Subtask(models.Model):
     def save(self, *args, **kwargs):
         if self.completed and self.completed_at is None:
             self.completed_at = timezone.now()
+            self.status = 4
+
+            if not self.completed_by and self.assigned_to:
+                self.completed_by = self.assigned_to
 
             if self.creator:
                 try:
@@ -120,7 +131,7 @@ class Subtask(models.Model):
                     pass
 
         super(Subtask, self).save(*args, **kwargs)
-        
+
         all_completed = not self.task.subtask_set.filter(completed=False).exists()
 
         if all_completed:
@@ -135,3 +146,8 @@ class Subtask(models.Model):
                     user_profile.save()
                 except UserProfile.DoesNotExist:
                     pass
+    
+    def start_working(self, user):
+        self.assigned_to = user
+        self.status = 3
+        self.save()
