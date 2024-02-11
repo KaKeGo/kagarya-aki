@@ -68,6 +68,7 @@ class Task(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     completed_at = models.DateTimeField(null=True, blank=True)
     status = models.IntegerField(choices=STATUS_CHOICES, default=1)
+    priority = models.IntegerField(choices=PRIORITY_CHOICES, default=1)
 
     completed = models.BooleanField(default=False)
     creator = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
@@ -181,7 +182,19 @@ class Subtask(models.Model):
             if self.task.creator:
                 try:
                     user_profile = UserProfile.objects.get(user=self.task.creator)
-                    user_profile.add_experience(3)
+
+                    if self.task.priority == 1:
+                        experience_points = 2
+                    elif self.task.priority == 2:
+                        experience_points = 3
+                    elif self.task.priority == 3:
+                        experience_points = 4
+                    elif self.task.priority == 4:
+                        experience_points = 6
+                    else:
+                        experience_points = 0
+
+                    user_profile.add_experience(experience_points)
                     user_profile.save()
                 except UserProfile.DoesNotExist:
                     pass
