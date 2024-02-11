@@ -32,6 +32,14 @@ class ProjectBoard(models.Model):
     def __str__(self):
         return self.name
     
+    @property
+    def total_tasks(self):
+        return self.task_set.count()
+    
+    @property
+    def completed_tasks(self):
+        return self.task_set.filter(status=4).count()
+
     def save(self, *args, **kwargs):
         if not self.slug:
             base_slug = slugify(self.name)
@@ -90,6 +98,22 @@ class Task(models.Model):
                 self.completed = False
                 self.completed_at = None
                 self.save()
+
+    @property
+    def total_subtasks(self):
+        return self.subtask_set.count()
+    
+    @property
+    def completed_subtasks(self):
+        return self.subtask_set.filter(status=4).count()
+    
+    @property
+    def in_progress_subtasks(self):
+        return self.subtask_set.filter(status=2).count()
+    
+    @property
+    def ready_subtasks(self):
+        return self.subtask_set.filter(status=3).count()
     
 class Subtask(models.Model):
     task = models.ForeignKey(Task, on_delete=models.CASCADE)
@@ -107,7 +131,21 @@ class Subtask(models.Model):
     def __str__(self):
         return self.name
     
+    def start_working(self, user):
+        self.assigned_to = user
+        self.status = 3
+        self.save()
+    
     def save(self, *args, **kwargs):
+        is_new = self._state.adding
+
+        super(Subtask, self).save(*args, **kwargs)
+
+        if is_new or self.status == 3:
+            if self.task.status != 3:
+                self.task.status = 3
+                self.save(update_fields=['status'])
+
         if self.completed and self.completed_at is None:
             self.completed_at = timezone.now()
             self.status = 4
@@ -137,7 +175,8 @@ class Subtask(models.Model):
         if all_completed:
             self.task.completed = True
             self.task.completed_at = timezone.now()
-            self.task.save(update_fields=['completed', 'completed_at'])
+            self.task.status = 4
+            self.task.save(update_fields=['completed', 'completed_at', 'status'])
 
             if self.task.creator:
                 try:
@@ -146,8 +185,3 @@ class Subtask(models.Model):
                     user_profile.save()
                 except UserProfile.DoesNotExist:
                     pass
-    
-    def start_working(self, user):
-        self.assigned_to = user
-        self.status = 3
-        self.save()
