@@ -29,12 +29,9 @@ class UserProfile(models.Model):
         return self.user.email
     
     def add_experience(self, points):
-        print(f"Dodawanie {points} punktów doświadczenia.")
         self.experience_points += points
         self.total_experience += points
-        print(f"Przed zapisem: {self.total_experience}")
         self.save()
-        print(f"Po zapisie: {self.total_experience}")
         self.check_level_up()
 
     def check_level_up(self):
