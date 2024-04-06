@@ -1,6 +1,7 @@
 from django.views.decorators.csrf import csrf_protect, ensure_csrf_cookie
 from django.utils.decorators import method_decorator
 from django.middleware.csrf import get_token, rotate_token
+from django.contrib.auth import logout
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -51,3 +52,12 @@ class UserLoginAPIView(APIView):
             return Response({'message': 'User logged in successfully'}, status=status.HTTP_200_OK)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST) 
+
+@method_decorator(csrf_protect, name='dispatch')
+class UserLogoutAPIView(APIView):
+    '''..Logout user'''
+    permission_classes = [permissions.IsAuthenticated, ]
+
+    def post(self, request, *args, **kwargs):
+        logout(request)
+        return Response({'message': 'User logged out successfully'}, status=status.HTTP_200_OK)
