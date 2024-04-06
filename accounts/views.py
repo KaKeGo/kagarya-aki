@@ -7,13 +7,14 @@ from rest_framework.response import Response
 from rest_framework import permissions, status
 
 from .serializers import (
-    UserRegistrationSerializer,
+    UserRegistrationSerializer, UserLoginSerializer,
 )
 
 
 
 @method_decorator(ensure_csrf_cookie, name='dispatch')
 class GetCSRFTokenApiView(APIView):
+    '''..CSRF token'''
     permission_classes = (permissions.AllowAny, )
 
     def get(self, request, *args, **kwargs):
@@ -27,6 +28,7 @@ class GetCSRFTokenApiView(APIView):
 
 @method_decorator(csrf_protect, name='dispatch')
 class UserRegistrationAPIView(APIView):
+    '''..Create user account'''
     permission_classes = (permissions.AllowAny, )
 
     def post(self, request, *args, **kwargs):
@@ -36,3 +38,16 @@ class UserRegistrationAPIView(APIView):
             return Response({'success': 'User created successfully'}, status=status.HTTP_201_CREATED)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@method_decorator(csrf_protect, name='dispatch')
+class UserLoginAPIView(APIView):
+    '''..Login user'''
+    permission_classes = [permissions.AllowAny, ]
+
+    def post(self, request, *args, **kwargs):
+        serializer = UserLoginSerializer(data=request.data, context={'request': request})
+        if serializer.is_valid():
+            user = serializer.validated_data['user']
+            return Response({'message': 'User logged in successfully'}, status=status.HTTP_200_OK)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST) 
