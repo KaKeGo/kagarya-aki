@@ -1,3 +1,5 @@
+from django.contrib.auth import authenticate
+
 from rest_framework import serializers
 
 from django.contrib.auth import get_user_model
@@ -9,8 +11,8 @@ from .utils import (
 User = get_user_model()
 
 
-
-class UserRegistrationSerializer(serializers.ModelSerializer):
+class UserRegistrationSerializer(serializers.ModelSerializer):  
+    '''..Create user account'''
     password = serializers.CharField(write_only=True)
     password_confirm = serializers.CharField(write_only=True)
     terms_accepted = serializers.BooleanField(required=True)
@@ -43,3 +45,23 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         validate_data.pop('password_confirm', None)
         user = User.objects.create_user(**validate_data)
         return user
+
+class UserLoginSerializer(serializers.Serializer):
+    '''..Login user '''
+    email = serializers.EmailField()
+    password = serializers.CharField(style={'input_type': 'password'}, trim_whitespace=True)
+
+    def validate(self, data):
+        email = data.get('email')
+        password = data.get('password')
+
+        user = authenticate(request=self.context.get('request'), username=email, password=password)
+
+        if not User.objects.filter(email=email).exists():
+            raise serializers.ValidationError({'email': 'There is no account with this email'})
+           
+        if not user:
+            raise serializers.ValidationError({'password': 'Wrong password!!'})
+        
+        data['user'] = user
+        return data
