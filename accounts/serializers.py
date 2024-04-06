@@ -2,7 +2,7 @@ from rest_framework import serializers
 
 from django.contrib.auth import get_user_model
 from .utils import (
-    validate_password_length,
+    validate_password_length, validate__email,
 )
 
 
@@ -13,10 +13,20 @@ User = get_user_model()
 class UserRegistrationSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
     password_confirm = serializers.CharField(write_only=True)
+    terms_accepted = serializers.BooleanField(required=True)
 
     class Meta:
         model = User
         fields = ['email', 'password', 'password_confirm', 'terms_accepted']
+
+    def validate_email(self, value):
+        email_error = validate__email(value)
+        if email_error:
+            raise serializers.ValidationError(email_error)
+        if User.objects.filter(email=value).exists():
+            raise serializers.ValidationError("User with this email already exists.")
+    
+        return value
 
     def validate_password(self, value):
         password_error = validate_password_length(value)
@@ -26,7 +36,7 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         if data['password'] != data['password_confirm']:
-            raise serializers.ValidationError({'password': 'Passwords are not the same'})
+            raise serializers.ValidationError({'password_confirm': ['Passwords are not the same']})
         return data
     
     def create(self, validate_data):

@@ -14,3 +14,8 @@ def validate_password_length(password):
     if not re.search("[!@#$%^&*(),.?\":{}|<>]", password):
         return 'Password must contain at least one special character' 
     return None
+
+def validate__email(email):
+    if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
+        return 'Invalid email address'
+    return None

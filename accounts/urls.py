@@ -12,6 +12,6 @@ app_name = 'accounts'
 
 urlpatterns = [
     path('getcsrftoken/', GetCSRFTokenApiView.as_view(), name='getcsrftoken'),
-    path('register/', UserRegistrationAPIView.as_view(), name='register'),
+    path('create/', UserRegistrationAPIView.as_view(), name='register'),
 ]
 
