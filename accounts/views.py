@@ -1,12 +1,13 @@
 from django.views.decorators.csrf import csrf_protect, ensure_csrf_cookie
 from django.utils.decorators import method_decorator
 from django.middleware.csrf import get_token, rotate_token
-from django.contrib.auth import logout
+from django.contrib.auth import logout, login
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import permissions, status
 
+from .profile_models import UserProfile
 from .serializers import (
     UserRegistrationSerializer, UserLoginSerializer,
 )
@@ -26,6 +27,25 @@ class GetCSRFTokenApiView(APIView):
             return Response({'Error': 'CSRFToken has not been retrieved'})
 
         return Response({'CSRFToken': csrf_token}, status=status.HTTP_200_OK)
+
+class UserStatusAPIView(APIView):
+    '''..User status check if user is logged in or anonymous'''
+    permission_classes = [permissions.AllowAny, ]
+
+    def get(self, request, *args, **kwargs):
+        is_authenticated = request.user.is_authenticated
+        if is_authenticated:
+            user_profile = UserProfile.objects.get(user=request.user)
+            username_or_email = user_profile.username if user_profile.username else request.user.email
+            
+            return Response({
+                    'is_authenticated': is_authenticated,
+                    'status': 'User is logged in',
+                    'email': request.user.email,
+                    'username_or_email': username_or_email,
+                 }, status=status.HTTP_200_OK)
+        else:
+            return Response({'status': 'User is anonymous'}, status=status.HTTP_200_OK)
 
 @method_decorator(csrf_protect, name='dispatch')
 class UserRegistrationAPIView(APIView):
@@ -49,6 +69,7 @@ class UserLoginAPIView(APIView):
         serializer = UserLoginSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
             user = serializer.validated_data['user']
+            login(request, user)
             return Response({'message': 'User logged in successfully'}, status=status.HTTP_200_OK)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST) 
