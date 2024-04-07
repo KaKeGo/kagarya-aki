@@ -1,22 +1,30 @@
+import jwt
+
+from django.conf import settings
 from django.views.decorators.csrf import csrf_protect, ensure_csrf_cookie
 from django.utils.decorators import method_decorator
 from django.middleware.csrf import get_token, rotate_token
-from django.contrib.auth import logout, login
+from django.contrib.auth import logout, login, get_user_model
+from django.shortcuts import redirect
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import permissions, status
 
+from .utils import (
+    send_activation_email,
+)
 from .profile_models import UserProfile
 from .serializers import (
     UserRegistrationSerializer, UserLoginSerializer,
 )
 
+User = get_user_model()
 
 
 @method_decorator(ensure_csrf_cookie, name='dispatch')
 class GetCSRFTokenApiView(APIView):
-    '''..CSRF token'''
+    #..CSRF token
     permission_classes = (permissions.AllowAny, )
 
     def get(self, request, *args, **kwargs):
@@ -29,7 +37,7 @@ class GetCSRFTokenApiView(APIView):
         return Response({'CSRFToken': csrf_token}, status=status.HTTP_200_OK)
 
 class UserStatusAPIView(APIView):
-    '''..User status check if user is logged in or anonymous'''
+    #..User status check if user is logged in or anonymous
     permission_classes = [permissions.AllowAny, ]
 
     def get(self, request, *args, **kwargs):
@@ -47,22 +55,43 @@ class UserStatusAPIView(APIView):
         else:
             return Response({'status': 'User is anonymous'}, status=status.HTTP_200_OK)
 
+class ActivateAccountAPIVIew(APIView):
+    # Activate account for user registration
+    permission_classes = (permissions.AllowAny, )
+
+    def get(self, request, *args, **kwargs):
+        token = kwargs.get('token', '')
+        try:
+            payload = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
+            user = User.objects.get(id=payload['user_id'])
+            if not user.is_active:
+                user.is_active = True
+                user.save()
+                return redirect(f"{settings.FRONTEND_DEV_URL}")
+            else:
+                return redirect(f"{settings.FRONTEND_DEV_URL}")
+        except jwt.ExpiredSignatureError:
+            return redirect(f"{settings.FRONTEND_DEV_URL}")
+        except (jwt.DecodeError, User.DoesNotExist):
+            return redirect(f"{settings.FRONTEND_DEV_URL}")
+
 @method_decorator(csrf_protect, name='dispatch')
 class UserRegistrationAPIView(APIView):
-    '''..Create user account'''
+    #..Create user account
     permission_classes = (permissions.AllowAny, )
 
     def post(self, request, *args, **kwargs):
         serializer = UserRegistrationSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
+            send_activation_email(user)
             return Response({'success': 'User created successfully'}, status=status.HTTP_201_CREATED)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @method_decorator(csrf_protect, name='dispatch')
 class UserLoginAPIView(APIView):
-    '''..Login user'''
+    #..Login user
     permission_classes = [permissions.AllowAny, ]
 
     def post(self, request, *args, **kwargs):
@@ -76,7 +105,7 @@ class UserLoginAPIView(APIView):
 
 @method_decorator(csrf_protect, name='dispatch')
 class UserLogoutAPIView(APIView):
-    '''..Logout user'''
+    #..Logout user
     permission_classes = [permissions.IsAuthenticated, ]
 
     def post(self, request, *args, **kwargs):

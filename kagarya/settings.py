@@ -213,3 +213,6 @@ CORS_ALLOW_METHODS = [
     "POST",
     "PUT",
 ]
+
+SITE_DEV_URL = 'http://localhost:8000'
+FRONTEND_DEV_URL = 'http://localhost:3000'
