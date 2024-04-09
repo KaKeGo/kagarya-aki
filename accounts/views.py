@@ -17,6 +17,7 @@ from .utils import (
 from .profile_models import UserProfile
 from .serializers import (
     UserRegistrationSerializer, UserLoginSerializer,
+    ChangePasswordSerializer,
 )
 
 User = get_user_model()
@@ -111,3 +112,16 @@ class UserLogoutAPIView(APIView):
     def post(self, request, *args, **kwargs):
         logout(request)
         return Response({'message': 'User logged out successfully'}, status=status.HTTP_200_OK)
+
+@method_decorator(csrf_protect, name='dispatch')
+class ChangePasswordAPIView(APIView):
+    permission_classes = (permissions.IsAuthenticated, )
+
+    def post(self, request, *args, **kwargs):
+        serializer = ChangePasswordSerializer(data=request.data, context={'request': request})
+        if serializer.is_valid():
+            user = request.user
+            user.set_password(serializer.validated_data['new_password'])
+            user.save()
+            return Response({'message': 'Password updated successfully'}, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
