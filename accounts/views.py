@@ -25,7 +25,7 @@ User = get_user_model()
 
 @method_decorator(ensure_csrf_cookie, name='dispatch')
 class GetCSRFTokenApiView(APIView):
-    #..CSRF token
+    # ..CSRF token
     permission_classes = (permissions.AllowAny, )
 
     def get(self, request, *args, **kwargs):
@@ -38,7 +38,7 @@ class GetCSRFTokenApiView(APIView):
         return Response({'CSRFToken': csrf_token}, status=status.HTTP_200_OK)
 
 class UserStatusAPIView(APIView):
-    #..User status check if user is logged in or anonymous
+    # ..User status check if user is logged in or anonymous
     permission_classes = [permissions.AllowAny, ]
 
     def get(self, request, *args, **kwargs):
@@ -57,7 +57,7 @@ class UserStatusAPIView(APIView):
             return Response({'status': 'User is anonymous'}, status=status.HTTP_200_OK)
 
 class ActivateAccountAPIVIew(APIView):
-    # Activate account for user registration
+    # ..Activate account for user registration
     permission_classes = (permissions.AllowAny, )
 
     def get(self, request, *args, **kwargs):
@@ -78,7 +78,7 @@ class ActivateAccountAPIVIew(APIView):
 
 @method_decorator(csrf_protect, name='dispatch')
 class UserRegistrationAPIView(APIView):
-    #..Create user account
+    # ..Create user account
     permission_classes = (permissions.AllowAny, )
 
     def post(self, request, *args, **kwargs):
@@ -92,7 +92,7 @@ class UserRegistrationAPIView(APIView):
 
 @method_decorator(csrf_protect, name='dispatch')
 class UserLoginAPIView(APIView):
-    #..Login user
+    # ..Login user
     permission_classes = [permissions.AllowAny, ]
 
     def post(self, request, *args, **kwargs):
@@ -106,7 +106,7 @@ class UserLoginAPIView(APIView):
 
 @method_decorator(csrf_protect, name='dispatch')
 class UserLogoutAPIView(APIView):
-    #..Logout user
+    # ..Logout user
     permission_classes = [permissions.IsAuthenticated, ]
 
     def post(self, request, *args, **kwargs):
@@ -115,6 +115,7 @@ class UserLogoutAPIView(APIView):
 
 @method_decorator(csrf_protect, name='dispatch')
 class ChangePasswordAPIView(APIView):
+    # ..User change password
     permission_classes = (permissions.IsAuthenticated, )
 
     def post(self, request, *args, **kwargs):
