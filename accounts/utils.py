@@ -46,3 +46,18 @@ def send_activation_email(user):
     html_message = render_to_string('email/activation_email.html', context)
     plain_message = strip_tags(html_message)
     send_mail(subject, plain_message, settings.EMAIL_HOST_USER, [user.email], html_message=html_message)
+
+def send_reset_password_email(user):
+    # ..Restet password
+    token = jwt.encode({
+        'user_id': user.id,
+        'exp': datetime.utcnow() + timedelta(hours=4)
+    }, settings.SECRET_KEY, algorithm='HS256')
+
+    reset_password_link = f"{settings.SITE_DEV_URL}{reverse('accounts:activate_account', kwargs={'token': token})}"
+    context = {'reset_password_link': reset_password_link}
+
+    subject = 'KaGaRya - Password reset'
+    html_message = render_to_string('email/reset_email.html', context)
+    plain_message = strip_tags(html_message)
+    send_mail(subject, plain_message, settings.EMAIL_HOST_USER, [user.email], html_message=html_message)

@@ -12,7 +12,7 @@ User = get_user_model()
 
 
 class UserRegistrationSerializer(serializers.ModelSerializer):  
-    '''..Create user account'''
+    # ..Create user account
     password = serializers.CharField(write_only=True)
     password_confirm = serializers.CharField(write_only=True)
     terms_accepted = serializers.BooleanField(required=True)
@@ -47,7 +47,7 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         return user
 
 class UserLoginSerializer(serializers.Serializer):
-    '''..Login user '''
+    # ..Login user 
     email = serializers.EmailField()
     password = serializers.CharField(style={'input_type': 'password'}, trim_whitespace=True)
 
@@ -67,6 +67,7 @@ class UserLoginSerializer(serializers.Serializer):
         return data
 
 class ChangePasswordSerializer(serializers.Serializer):
+    # ..Change user password
     old_password = serializers.CharField(required=True)
     new_password = serializers.CharField(required=True)
     confirm_new_password = serializers.CharField(required=True)
@@ -80,5 +81,35 @@ class ChangePasswordSerializer(serializers.Serializer):
     def validate(self, data):
         if data['new_password'] != data['confirm_new_password']:
             raise serializers.ValidationError({'confirm_new_password': 'New password must match'})
-        validate_password_length(data['new_password'])
+        password_error = validate_password_length(data['new_password'])
+        if password_error:
+            raise serializers.ValidationError({
+                'new_password': password_error,
+                'confirm_new_password': password_error
+            })
+        return data
+
+class PasswordResetSerializer(serializers.Serializer):
+    # ..User reset password
+    email = serializers.EmailField()
+
+    def validate_email(self, value):
+        if not User.objects.filter(email=value).exists():
+            raise serializers.ValidationError('User with this email does not exist')
+        return value
+
+class SetNewPasswordSerializer(serializers.Serializer):
+    # ..Set new password for user
+    new_password = serializers.CharField(required=True)
+    confirm_new_password = serializers.CharField(required=True)
+
+    def validate_new_password(self, value):
+        password_error = validate_password_length(value)
+        if password_error:
+            raise serializers.ValidationError(password_error)
+        return value
+
+    def validate(self, data):
+        if data['new_password'] != data['confirm_new_password']:
+            raise serializers.ValidationError({"confirm_new_password": "Passwords do not match"})
         return data

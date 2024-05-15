@@ -12,12 +12,12 @@ from rest_framework.response import Response
 from rest_framework import permissions, status
 
 from .utils import (
-    send_activation_email,
+    send_activation_email, send_reset_password_email,
 )
 from .profile_models import UserProfile
 from .serializers import (
     UserRegistrationSerializer, UserLoginSerializer,
-    ChangePasswordSerializer,
+    ChangePasswordSerializer, PasswordResetSerializer,
 )
 
 User = get_user_model()
@@ -125,4 +125,20 @@ class ChangePasswordAPIView(APIView):
             user.set_password(serializer.validated_data['new_password'])
             user.save()
             return Response({'message': 'Password updated successfully'}, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@method_decorator(csrf_protect, name='dispatch')
+class PasswordResetAPIView(APIView):
+    # ..User password reset
+    permission_classes = [permissions.AllowAny, ]
+
+    def post(self, request, *args, **kwargs):
+        serializer = PasswordResetSerializer(data=request.data)
+        if serializer.is_valid():
+            email = serializer.validated_data['email']
+            user = User.objects.filter(email=email).first()
+            if user:
+                send_reset_password_email(user)
+                return Response({'message': 'If an account with that email exists, we have sent an email to reset your password'}, status=status.HTTP_200_OK)
+            return Response({'error': 'User with this email does not exist'}, status=status.HTTP_404_NOT_FOUND)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
