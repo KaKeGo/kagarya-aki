@@ -17,7 +17,7 @@ from .utils import (
 from .profile_models import UserProfile
 from .serializers import (
     UserRegistrationSerializer, UserLoginSerializer,
-    ChangePasswordSerializer, PasswordResetSerializer,
+    ChangePasswordSerializer, PasswordResetSerializer, SetNewPasswordSerializer,
 )
 
 User = get_user_model()
@@ -142,3 +142,27 @@ class PasswordResetAPIView(APIView):
                 return Response({'message': 'If an account with that email exists, we have sent an email to reset your password'}, status=status.HTTP_200_OK)
             return Response({'error': 'User with this email does not exist'}, status=status.HTTP_404_NOT_FOUND)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@method_decorator(csrf_protect, name='dispatch')
+class PasswordResetConfirmAPIView(APIView):
+    permission_classes = [permissions.AllowAny, ]
+
+    def post(self, request, *args, **kwargs):
+        token = request.data.get('token')
+        serializer = SetNewPasswordSerializer(data=request.data)
+        if serializer.is_valid():
+            new_password = serializer.validated_data['new_password']
+            try:
+                payload = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
+                user = User.objects.get(id=payload['user_id'])
+                user.set_password(new_password)
+                user.save()
+                return Response({'message': 'Passsword has been reset successfully'}, status=status.HTTP_200_OK)
+            except jwt.ExpiredSignatureError:
+                return Response({'error': 'Token expired'}, status=status.HTTP_400_BAD_REQUEST)
+            except jwt.DecodeError:
+                return Response({'error': 'Invalid token'}, status=status.HTTP_400_BAD_REQUEST)
+            except User.DoesNotExist:
+                return Response({'error': 'User does not exist'}, status=status.HTTP_404_NOT_FOUND)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

@@ -4,7 +4,7 @@ from .views import (
     GetCSRFTokenApiView, UserStatusAPIView,
     ActivateAccountAPIVIew,
     UserRegistrationAPIView, UserLoginAPIView, UserLogoutAPIView, 
-    ChangePasswordAPIView, PasswordResetAPIView,
+    ChangePasswordAPIView, PasswordResetAPIView, PasswordResetConfirmAPIView,
 )
 
 
@@ -20,6 +20,7 @@ urlpatterns = [
 
     path('changepassword/', ChangePasswordAPIView.as_view(), name='change_password'),
     path('reset-password/', PasswordResetAPIView.as_view(), name='reset_password_link'),
+    path('reset-password-confirm/<str:token>/', PasswordResetConfirmAPIView.as_view(), name='reset_password_confirm'),
 
     path('create/', UserRegistrationAPIView.as_view(), name='register'),
     path('login/', UserLoginAPIView.as_view(), name='login'),

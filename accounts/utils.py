@@ -54,7 +54,7 @@ def send_reset_password_email(user):
         'exp': datetime.utcnow() + timedelta(hours=4)
     }, settings.SECRET_KEY, algorithm='HS256')
 
-    reset_password_link = f"{settings.SITE_DEV_URL}{reverse('accounts:activate_account', kwargs={'token': token})}"
+    reset_password_link = f"{settings.FRONTEND_DEV_URL}/reset-password-confirm/{token}/"
     context = {'reset_password_link': reset_password_link}
 
     subject = 'KaGaRya - Password reset'
