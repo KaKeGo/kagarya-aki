@@ -12,3 +12,7 @@ STATUS_CHOICES = (
     (3, 'In Progress'),
     (4, 'Completed'),
 )
+
+ROLE_CHOICES = (
+    (1, 'Member'),
+)

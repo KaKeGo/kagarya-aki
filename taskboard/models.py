@@ -4,12 +4,14 @@ from django.db import models
 from django.utils import timezone
 from django.utils.text import slugify
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
 
 from accounts.profile_models import UserProfile
 from .permissions import TaskPermission
 from .choices import (
     PRIORITY_CHOICES,
     STATUS_CHOICES,
+    ROLE_CHOICES,
 )
 
 
@@ -25,6 +27,8 @@ def generate_random_string(N=10):
 class ProjectBoard(models.Model):
     name = models.CharField(max_length=50)
     description = models.TextField(max_length=1000)
+    created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+    members = models.ManyToManyField(User, through='ProjectMembership', related_name='project_members')
 
     creator = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
     slug = models.SlugField(unique=True, max_length=255, null=True, blank=True)
@@ -39,6 +43,14 @@ class ProjectBoard(models.Model):
     @property
     def completed_tasks(self):
         return self.task_set.filter(status=4).count()
+    
+    @property
+    def total_members(self):
+        return self.members.count()
+    
+    @property
+    def members_names(self):
+        return [member.username if member.username else member.email for member in self.members.all()]
 
     def save(self, *args, **kwargs):
         if not self.slug:
@@ -60,6 +72,11 @@ class ProjectBoard(models.Model):
                 can_add_subtask=True,
             )
     
+class ProjectMembership(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    project_board = models.ForeignKey(ProjectBoard, on_delete=models.CASCADE)
+    role = models.IntegerField(choices=ROLE_CHOICES, default=1)
+
 class Task(models.Model):
     project_board = models.ForeignKey(ProjectBoard, on_delete=models.CASCADE)
     name = models.CharField(max_length=50)
@@ -132,12 +149,20 @@ class Subtask(models.Model):
     def __str__(self):
         return self.name
     
+    def clean(self):
+        if self.assigned_to and not self.task.project_board.members.filter(id=self.assigned_to.id).exists():
+            raise ValidationError(f"User {self.assigned_to.email} is not a member of the project.")
+
+        if self.completed_by and not self.task.project_board.members.filter(id=self.completed_by.id).exists():
+            raise ValidationError(f"User {self.completed_by.email} is not a member of the project.")
+    
     def start_working(self, user):
         self.assigned_to = user
         self.status = 3
         self.save()
     
     def save(self, *args, **kwargs):
+        self.clean()
         is_new = self._state.adding
 
         super(Subtask, self).save(*args, **kwargs)
