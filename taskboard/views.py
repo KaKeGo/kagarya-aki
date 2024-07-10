@@ -18,6 +18,6 @@ class ProjectBoardAPIView(APIView):
     permission_classes = [permissions.IsAuthenticated, ]
 
     def get(self, request, *args, **kwargs):
-        project_board = ProjectBoard.objects.all()
+        project_board = ProjectBoard.objects.filter(creator=request.user)
         serializer = ProjectBoardSerializer(project_board, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
