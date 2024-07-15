@@ -19,10 +19,11 @@ class TaskSerializer(serializers.ModelSerializer):
 class ProjectBoardSerializer(serializers.ModelSerializer):
     creator = serializers.SerializerMethodField()
     short_description = serializers.SerializerMethodField()
+    url = serializers.HyperlinkedIdentityField(view_name='task_board:projectboard_detail', lookup_field='slug')
 
     class Meta:
         model = ProjectBoard
-        fields = ['id', 'name', 'short_description', 'creator', 'total_tasks', 'completed_tasks', 'slug']
+        fields = ['id', 'name', 'short_description', 'creator', 'total_tasks', 'completed_tasks', 'slug', 'url']
 
     def get_creator(self, obj):
         user_profile = UserProfile.objects.get(user=obj.creator)
