@@ -29,7 +29,7 @@ class ProjectBoardSerializer(serializers.ModelSerializer):
         return user_profile.username if user_profile.username else obj.creator.email
     
     def get_short_description(self, obj):
-        if len(obj.description) > 40:
+        if len(obj.description) > 60:
             return obj.description[:60] + '...'
         return obj.description
 
