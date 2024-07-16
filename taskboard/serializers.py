@@ -15,9 +15,23 @@ User = get_user_model()
 
 
 class TaskSerializer(serializers.ModelSerializer):
+    status_display = serializers.SerializerMethodField()
+    priority_display = serializers.SerializerMethodField()
+    creator_display = serializers.SerializerMethodField()
+    
     class Meta:
         model = Task
-        fields = ['id', 'name', 'created_at', 'completed_at', 'status', 'priority', 'completed', 'creator', 'slug']
+        fields = ['id', 'name', 'created_at', 'completed_at', 'status_display', 'priority_display', 'completed', 'creator_display', 'slug']
+
+    def get_status_display(self, obj):
+        return obj.get_status_display()
+    
+    def get_priority_display(self, obj):
+        return obj.get_priority_display()
+    
+    def get_creator_display(self, obj):
+        user_profile = UserProfile.objects.get(user=obj.creator)
+        return user_profile.username if user_profile.username else obj.creator.email
 
 class ProjectBoardSerializer(serializers.ModelSerializer):
     creator = serializers.SerializerMethodField()
@@ -39,10 +53,11 @@ class ProjectBoardSerializer(serializers.ModelSerializer):
 
 class ProjectBoardDetailSerializer(serializers.ModelSerializer):
     tasks = serializers.SerializerMethodField()
+    creator_display = serializers.SerializerMethodField()
     
     class Meta:
         model = ProjectBoard
-        fields = ['id', 'name', 'description', 'creator', 'tasks', 'total_tasks', 'completed_tasks', 'slug']
+        fields = ['id', 'name', 'description', 'creator_display', 'tasks', 'total_tasks', 'completed_tasks', 'slug']
 
     def get_tasks(self, obj):
         request = self.context.get('request')
@@ -51,3 +66,7 @@ class ProjectBoardDetailSerializer(serializers.ModelSerializer):
         paginated_tasks = paginator.paginate_queryset(tasks, request)
         serializer = TaskSerializer(paginated_tasks, many=True, context={'request': request})
         return paginator.get_paginated_response(serializer.data).data
+    
+    def get_creator_display(self, obj):
+        user_profile = UserProfile.objects.get(user=obj.creator)
+        return user_profile.username if user_profile.username else obj.creator.email
