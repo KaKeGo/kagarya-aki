@@ -4,6 +4,9 @@ from django.contrib.auth import get_user_model
 
 from accounts.profile_models import UserProfile
 
+from kagarya.pagination import (
+    TaskResultsSetPagination,
+)
 from .models import (
     ProjectBoard, Task,
 )
@@ -35,8 +38,16 @@ class ProjectBoardSerializer(serializers.ModelSerializer):
         return obj.description
 
 class ProjectBoardDetailSerializer(serializers.ModelSerializer):
-    task = TaskSerializer(many=True, read_only=True, source='task_set')
+    tasks = serializers.SerializerMethodField()
     
     class Meta:
         model = ProjectBoard
-        fields = ['id', 'name', 'description', 'task', 'creator', 'total_tasks', 'completed_tasks', 'slug']
+        fields = ['id', 'name', 'description', 'creator', 'tasks', 'total_tasks', 'completed_tasks', 'slug']
+
+    def get_tasks(self, obj):
+        request = self.context.get('request')
+        paginator = TaskResultsSetPagination()
+        tasks = Task.objects.filter(project_board=obj)
+        paginated_tasks = paginator.paginate_queryset(tasks, request)
+        serializer = TaskSerializer(paginated_tasks, many=True, context={'request': request})
+        return paginator.get_paginated_response(serializer.data).data
