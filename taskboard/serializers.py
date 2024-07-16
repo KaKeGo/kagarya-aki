@@ -14,7 +14,12 @@ from .models import (
 User = get_user_model()
 
 
+#Task
 class TaskSerializer(serializers.ModelSerializer):
+    """
+    Serializer for Task model.
+    Provides additional fields for status, priority, and creator display.
+    """
     status_display = serializers.SerializerMethodField()
     priority_display = serializers.SerializerMethodField()
     creator_display = serializers.SerializerMethodField()
@@ -33,7 +38,12 @@ class TaskSerializer(serializers.ModelSerializer):
         user_profile = UserProfile.objects.get(user=obj.creator)
         return user_profile.username if user_profile.username else obj.creator.email
 
+#Project Board
 class ProjectBoardSerializer(serializers.ModelSerializer):
+    """
+    Serializer for ProjectBoard model.
+    Provides additional fields for creator and short description.
+    """
     creator = serializers.SerializerMethodField()
     short_description = serializers.SerializerMethodField()
     url = serializers.HyperlinkedIdentityField(view_name='task_board:projectboard_detail', lookup_field='slug')
@@ -52,6 +62,10 @@ class ProjectBoardSerializer(serializers.ModelSerializer):
         return obj.description
 
 class ProjectBoardDetailSerializer(serializers.ModelSerializer):
+    """
+    Serializer for detailed view of ProjectBoard model.
+    Provides additional fields for tasks and creator display.
+    """
     tasks = serializers.SerializerMethodField()
     creator_display = serializers.SerializerMethodField()
     

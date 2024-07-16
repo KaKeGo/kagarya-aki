@@ -18,7 +18,11 @@ from .serializers import (
 )
 
 
+#Projecy Board
 class ProjectBoardAPIView(APIView):
+    """
+    API view to retrieve project boards for the authenticated user.
+    """
     permission_classes = [permissions.IsAuthenticated, ]
 
     def get(self, request, *args, **kwargs):
@@ -30,6 +34,9 @@ class ProjectBoardAPIView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 class ProjectBoardDetailAPIView(APIView):
+    """
+    API view to retrieve detailed information about a specific project board, including paginated tasks.
+    """
     permission_classes = [permissions.IsAuthenticated, ]
     pagination_class = TaskResultsSetPagination
 
