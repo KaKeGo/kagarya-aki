@@ -2,6 +2,8 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from rest_framework.utils.urls import replace_query_param
 
+import logging
+logger = logging.getLogger(__name__)
 
 class TaskResultsSetPagination(PageNumberPagination):
     page_size = 1
@@ -29,15 +31,15 @@ class TaskResultsSetPagination(PageNumberPagination):
     
     def get_page_range(self, current_page, totla_pages):
         page_range = []
-        if totla_pages <= 7:
+        if totla_pages <= 3:
             page_range = list(range(1, totla_pages + 1))
         else:
-            if current_page <4:
-                page_range = list(range(1, 6)) + ['...', totla_pages]
-            elif current_page > totla_pages - 4:
-                page_range = [1, '...'] + list(range(totla_pages - 4, totla_pages + 1))
+            if current_page == 1:
+                page_range = [1, 2, 3]
+            elif current_page == totla_pages:
+                page_range = [totla_pages - 2, totla_pages -1, totla_pages]
             else:
-                page_range = [1, '...'] + list(range(current_page - 1, current_page + 2)) + ['...', totla_pages]
+                page_range = [current_page - 1, current_page, current_page + 1]
         return page_range
     
     def get_first_link(self):
@@ -51,4 +53,18 @@ class TaskResultsSetPagination(PageNumberPagination):
             return None
         url = self.request.build_absolute_uri()
         return replace_query_param(url, self.page_query_param, self.page.paginator.num_pages)
+    
+    def get_next_link(self):
+        if not self.page.has_next():
+            return None
+        url = self.request.build_absolute_uri()
+        page_number = self.page.next_page_number()
+        return replace_query_param(url, self.page_query_param, page_number)
+    
+    def get_previous_link(self):
+        if not self.page.has_previous():
+            return None
+        url = self.request.build_absolute_uri()
+        page_number = self.page.previous_page_number()
+        return replace_query_param(url, self.page_query_param, page_number)
 

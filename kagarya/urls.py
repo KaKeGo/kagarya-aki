@@ -10,7 +10,7 @@ urlpatterns = [
     path('kakemin/', admin.site.urls),
     
     path('accounts/', include('accounts.urls')),
-    path('taksboard/', include('taskboard.urls')),
+    path('taskboard/', include('taskboard.urls')),
 ]
 
 if settings.DEBUG:
