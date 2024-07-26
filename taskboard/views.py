@@ -10,11 +10,10 @@ from kagarya.pagination import (
     TaskResultsSetPagination,
 )
 from .models import (
-    ProjectBoard, Task
+    ProjectBoard,
 )
 from .serializers import (
     ProjectBoardSerializer, ProjectBoardDetailSerializer,
-    TaskSerializer,
 )
 
 

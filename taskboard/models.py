@@ -43,6 +43,10 @@ class ProjectBoard(models.Model):
     @property
     def completed_tasks(self):
         return self.task_set.filter(status=4).count()
+
+    @property
+    def remaining_tasks(self):
+        return self.task_set.exclude(status=4).count()
     
     @property
     def total_members(self):

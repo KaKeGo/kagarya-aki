@@ -4,9 +4,9 @@ from rest_framework.utils.urls import replace_query_param
 
 
 class TaskResultsSetPagination(PageNumberPagination):
-    page_size = 20
+    page_size = 1
     page_size_query_param = 'page_size'
-    max_page_size = 20
+    max_page_size = 1
 
     def get_paginated_response(self, data):
         current_page = self.page.number

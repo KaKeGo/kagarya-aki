@@ -71,7 +71,7 @@ class ProjectBoardDetailSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = ProjectBoard
-        fields = ['id', 'name', 'description', 'creator_display', 'tasks', 'total_tasks', 'completed_tasks', 'slug']
+        fields = ['id', 'name', 'description', 'creator_display', 'tasks', 'total_tasks', 'completed_tasks', 'remaining_tasks', 'slug']
 
     def get_tasks(self, obj):
         request = self.context.get('request')
