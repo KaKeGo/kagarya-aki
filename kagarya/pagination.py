@@ -37,7 +37,7 @@ class TaskResultsSetPagination(PageNumberPagination):
             if current_page == 1:
                 page_range = [1, 2, 3]
             elif current_page == totla_pages:
-                page_range = [totla_pages - 2, totla_pages -1, totla_pages]
+                page_range = [totla_pages - 2, totla_pages - 1, totla_pages]
             else:
                 page_range = [current_page - 1, current_page, current_page + 1]
         return page_range
